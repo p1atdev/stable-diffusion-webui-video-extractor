@@ -1,0 +1,3 @@
+[submodule "tagger"]
+	path = tagger
+	url = https://github.com/toriato/stable-diffusion-webui-wd14-tagger
