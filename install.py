@@ -15,7 +15,7 @@ tagger_dir = extension_path / "tagger"
 if not tagger_dir.exists():
     # git submodule init
     launch.run(
-        f"cd {extension_path.name} & git submodule init",
+        f"cd {extension_path.name} && git submodule update --init --recursive",
         "init submodule for Video Extractor",
     )
 
