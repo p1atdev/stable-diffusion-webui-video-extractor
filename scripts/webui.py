@@ -1,9 +1,11 @@
 import os
+import tempfile
 from typing import Dict
-import numpy as np
 import threading
 import queue
 from PIL import Image
+import shutil
+from pathlib import Path
 
 import gradio as gr
 
@@ -24,8 +26,9 @@ AESTHETIC_MODELS: Dict[str, LaionAestheticModelType] = {
 }
 
 CURRENT_STATE = {
-    "extracted": [],
-    "excluded": []
+    "video_path": None,
+    "extracted": [], # list[Image.Image]
+    "excluded": [] # list[Image.Image]
 }
 
 def on_single_preview_btn_clicked(
@@ -164,6 +167,7 @@ def on_single_extract_btn_clicked(
         print("Excluded frames: ", len(excluded_frames))
 
         global CURRENT_STATE
+        CURRENT_STATE["video_path"] = video_path
         CURRENT_STATE["extracted"] = extracted_frames
         CURRENT_STATE["excluded"] = excluded_frames
 
@@ -184,6 +188,55 @@ def on_single_extract_btn_clicked(
     except Exception as e:
         print(e)
         return [f"Error: {e}", None, None]
+
+def on_single_download_extracted_btn(folder_name: str = "extracted", frame_type: str = "extracted"):
+    if "extracted" not in CURRENT_STATE:
+        return ["No extracted frames", None]
+    
+    try:
+        # 一時ディレクトリを作成
+        tmp_dir = tempfile.TemporaryDirectory().name
+
+        # フォルダを作成
+        folder_path = Path(tmp_dir, folder_name)
+        print("Created folder path", folder_path)
+
+        # 既にあったら削除
+        if os.path.exists(folder_path):
+            print("Folder already exists. Removing...")
+            shutil.rmtree(folder_path)
+            print("Removed folder", folder_path)
+
+        
+        os.makedirs(folder_path)
+        print("Created folder", folder_path)
+
+        # フォルダ内に画像を作成
+        for i, frame in enumerate(CURRENT_STATE[frame_type]):
+            img_path = Path(folder_path, f"{i}.jpg")
+            frame.save(img_path)
+        print("Created images in folder", folder_path)
+
+        # 既に zip あったら削除
+        zip_path = Path(tmp_dir, f"{folder_name}.zip")
+        if os.path.exists(zip_path):
+            print("Zip file already exists. Removing...")
+            os.remove(zip_path)
+            print("Removed zip file", zip_path)
+
+        # ZIPファイルに圧縮
+        zip_path = shutil.make_archive(os.path.join(tmp_dir, folder_name), "zip", folder_path)
+
+        print("Compressing finished!", zip_path)
+
+        # フォルダを削除
+        shutil.rmtree(folder_path)
+
+        # パスを返す
+        return ["Compressing finished! Download from below area.", zip_path]
+    except Exception as e:
+        print(e)
+        return [f"Error: {e}", None]
 
 def on_common_model_unload_btn_clicked():
     unload_wd14tagger()
@@ -213,7 +266,7 @@ def on_ui_tabs():
 
                                 with gr.Accordion("Show excluded", open=False):
                                     single_excluded_gallery = gr.Gallery(label="Excluded frames").style(grid=[4], height="auto")
-                                    single_donwload_extracted_btn = gr.Button("Download excluded frames (zip)", variant="secondary")
+                                    single_donwload_excluded_btn = gr.Button("Download excluded frames (zip)", variant="secondary")
                                     single_download_all_btn = gr.Button("Download all frames (zip)", variant="secondary")
 
                     with gr.TabItem(label="Batch process"):
@@ -292,8 +345,8 @@ def on_ui_tabs():
 
                         common_model_unload_btn = gr.Button("Unload models", variant="secondary")
 
-
-                    gr.Column() # spacer
+                    with gr.Column():
+                        common_file_download_area = gr.File(label="Download area", format="zip", interactive=False)
     
         single_preview_btn.click(
             fn=on_single_preview_btn_clicked,
@@ -324,6 +377,12 @@ def on_ui_tabs():
                 single_extracted_gallery,
                 single_excluded_gallery
             ]
+        )
+
+        single_download_extracted_btn.click(
+            fn=on_single_download_extracted_btn,
+            inputs=[],
+            outputs=[single_status_text, common_file_download_area]
         )
 
         common_model_unload_btn.click(

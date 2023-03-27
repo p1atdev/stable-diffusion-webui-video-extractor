@@ -70,3 +70,4 @@ class LaionAesthetic():
         del self.predictor
         del self.clip_model
         del self.clip_preprocess
+        torch.cuda.empty_cache()
