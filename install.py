@@ -11,14 +11,6 @@ if not launch.is_installed("clip"):
 
 extension_path =  Path(paths.script_path, "extensions") / "stable-diffusion-webui-video-extractor"
 tagger_dir = extension_path / "tagger"
-
-if not tagger_dir.exists():
-    # git submodule init
-    launch.run(
-        f"cd {extension_path.resolve()} && git submodule update --init --recursive",
-        "init submodule for Video Extractor",
-    )
-
 preload_py = extension_path / "preload.py"
 
 # if preload.py is does not exist, copy from /tagger/preload.py and other .py from /tagger/tagger to /tagger
