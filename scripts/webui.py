@@ -233,10 +233,10 @@ def on_single_download_extracted_btn(folder_name: str = "extracted", frame_type:
         shutil.rmtree(folder_path)
 
         # パスを返す
-        return ["Compressing finished! Download from below area.", zip_path]
+        return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
     except Exception as e:
         print(e)
-        return [f"Error: {e}", None]
+        return [f"Error: {e}", None, ""]
 
 def on_common_model_unload_btn_clicked():
     unload_wd14tagger()
@@ -346,6 +346,7 @@ def on_ui_tabs():
                         common_model_unload_btn = gr.Button("Unload models", variant="secondary")
 
                     with gr.Column():
+                        common_download_area_message_md = gr.Markdown("")
                         common_file_download_area = gr.File(label="Download area", format="zip", interactive=False)
     
         single_preview_btn.click(
@@ -382,7 +383,7 @@ def on_ui_tabs():
         single_download_extracted_btn.click(
             fn=on_single_download_extracted_btn,
             inputs=[],
-            outputs=[single_status_text, common_file_download_area]
+            outputs=[single_status_text, common_file_download_area, common_download_area_message_md]
         )
 
         common_model_unload_btn.click(
