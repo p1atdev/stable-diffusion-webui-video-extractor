@@ -134,7 +134,7 @@ def on_single_extract_btn_clicked(
             if num_processed_frames == 0:
                 print("0 % proceeded")
             else:
-                print("{:2f} % proceeded".format((len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100))
+                print("{:.2f} % proceeded".format((len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100))
             
             try:
                 frame_index, extracted_frame = extracted_frames_queue.get(
@@ -167,12 +167,12 @@ def on_single_extract_btn_clicked(
         CURRENT_STATE["extracted"] = extracted_frames
         CURRENT_STATE["excluded"] = excluded_frames
 
-        if len(extracted_frames) >= 20 or len(excluded_frames) >= 20:
-            print("Too many frames to show. Showing only 50")
+        if len(extracted_frames) >= 30 or len(excluded_frames) >= 30:
+            print("Too many frames to show. Showing only 30")
             return [
                 f"Too many frames to show. Showing only 50. Extracting frames from {video_path} completed!",
-                extracted_frames[:min(20, len(extracted_frames))],
-                excluded_frames[:min(20, len(excluded_frames))]
+                extracted_frames[:min(30, len(extracted_frames))],
+                excluded_frames[:min(30, len(excluded_frames))]
             ]
         else:
             return [
