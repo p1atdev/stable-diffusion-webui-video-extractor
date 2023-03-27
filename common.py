@@ -12,7 +12,7 @@ BlurryTags = ["blurry"]
 
 LAION_AESTHETIC_MODELS_PATH = None
 
-extensions_dir = Path(paths.extensions_dir)
+extensions_dir = Path(paths.script_path, "extensions")
 if (extensions_dir / "stable-diffusion-webui-blip2-captioner" / "models"):
     LAION_AESTHETIC_MODELS_PATH = extensions_dir / "stable-diffusion-webui-blip2-captioner" / "models"
 else:
