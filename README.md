@@ -2,6 +2,8 @@
 
 Extract all aesthetic frame from videos.
 
+> Note: This extension is currently under construction. 
+
 ## Features (TODO)
 
 - [x] Single video processing
