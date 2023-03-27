@@ -131,6 +131,11 @@ def on_single_extract_btn_clicked(
 
         while not frame_getter_done.is_set() or len(extracted_frames) + len(excluded_frames) < num_processed_frames:
             # print(f"Extracted frames: {len(extracted_frames)}")
+            if num_processed_frames == 0:
+                print("0 % proceeded")
+            else:
+                print("{:2f} % proceeded".format((len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100))
+            
             try:
                 frame_index, extracted_frame = extracted_frames_queue.get(
                     block=not frame_getter_done.is_set(), timeout=1
@@ -162,12 +167,12 @@ def on_single_extract_btn_clicked(
         CURRENT_STATE["extracted"] = extracted_frames
         CURRENT_STATE["excluded"] = excluded_frames
 
-        if len(extracted_frames) >= 50 or len(excluded_frames) >= 50:
+        if len(extracted_frames) >= 20 or len(excluded_frames) >= 20:
             print("Too many frames to show. Showing only 50")
             return [
                 f"Too many frames to show. Showing only 50. Extracting frames from {video_path} completed!",
-                extracted_frames[:min(50, len(extracted_frames))],
-                excluded_frames[:min(50, len(excluded_frames))]
+                extracted_frames[:min(20, len(extracted_frames))],
+                excluded_frames[:min(20, len(excluded_frames))]
             ]
         else:
             return [
@@ -245,7 +250,7 @@ def on_ui_tabs():
                                 minimum=0, 
                                 maximum=1, 
                                 step=0.05, 
-                                value=0.8, 
+                                value=0.5, 
                                 interactive=True
                             )
 
@@ -254,9 +259,9 @@ def on_ui_tabs():
                             common_step_of_frames_slider = gr.Slider(
                                 label="Step of frames",
                                 minimum=1, 
-                                maximum=100, 
+                                maximum=600, 
                                 step=1, 
-                                value=5, 
+                                value=60, 
                                 interactive=True
                             )
 
