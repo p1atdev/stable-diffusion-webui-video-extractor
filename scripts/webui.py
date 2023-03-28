@@ -103,6 +103,8 @@ def on_single_extract_btn_clicked(
 
         frame_getter_done = threading.Event()
 
+        global LAST_PROGRESSION
+
         def process_worker():
             print("Loading WD 14 Tagger...")
             wd14tagger = WD14Tagger(WD14TAGGER_MODELS[tagging_model_type])
@@ -149,8 +151,6 @@ def on_single_extract_btn_clicked(
 
         while not frame_getter_done.is_set() or len(extracted_frames) + len(excluded_frames) < num_processed_frames:
             # print(f"Extracted frames: {len(extracted_frames)}")
-            global LAST_PROGRESSION
-
             if num_processed_frames == 0:
                 print("0 % proceeded")
             else:
@@ -159,9 +159,11 @@ def on_single_extract_btn_clicked(
                     print("{:.2f} % proceeded".format(current_progression))
                 LAST_PROGRESSION = current_progression
             
+            # print("not frame_getter_done.is_set()", not frame_getter_done.is_set())
+
             try:
                 frame_index, extracted_frame = extracted_frames_queue.get(
-                    block=not frame_getter_done.is_set(), timeout=1
+                    block=not frame_getter_done.is_set(), timeout=0.1
                 )
                 extracted_frames[frame_index] = extracted_frame
             except queue.Empty:
@@ -169,7 +171,7 @@ def on_single_extract_btn_clicked(
 
             try:
                 frame_index, excluded_frame = excluded_frames_queue.get(
-                    block=not frame_getter_done.is_set(), timeout=1
+                    block=not frame_getter_done.is_set(), timeout=0.1
                 )
                 excluded_frames[frame_index] = excluded_frame
             except queue.Empty:
@@ -190,6 +192,7 @@ def on_single_extract_btn_clicked(
         CURRENT_STATE["video_path"] = video_path
         CURRENT_STATE["extracted"] = extracted_frames
         CURRENT_STATE["excluded"] = excluded_frames
+        LAST_PROGRESSION = 0
 
         if len(extracted_frames) >= 30 or len(excluded_frames) >= 30:
             print("Too many frames to show. Showing only 30")
