@@ -6,6 +6,7 @@ import queue
 from PIL import Image
 import shutil
 from pathlib import Path
+import time
 
 import gradio as gr
 
@@ -35,6 +36,7 @@ CURRENT_STATE = {
 LAST_PROGRESSION = 0
 
 def on_single_video_set(video_path: str):
+    print("Video set to ", video_path) 
     if not os.path.exists(video_path) or video_path == "" or video_path is None:
         return ""
     
@@ -100,6 +102,7 @@ def on_single_extract_btn_clicked(
         frame_queue = queue.Queue()
 
         num_processed_frames = 0
+        total_frames = get_video_frames(video_path) // step_of_frames
 
         frame_getter_done = threading.Event()
 
@@ -134,11 +137,13 @@ def on_single_extract_btn_clicked(
             for frame, frame_index in frames:
                 if frame is None:
                     break
-                frame_queue.put((frame_index, frame))
+                frame_queue.put((frame_index, frame), block=True)
                 num_processed_frames += 1
 
             frame_queue.put((None, None))
             frame_getter_done.set()
+            print("Frame getter done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("is set?", frame_getter_done.is_set())
 
         processing_thread = threading.Thread(target=process_worker)
         processing_thread.start()
@@ -149,21 +154,19 @@ def on_single_extract_btn_clicked(
         extracted_frames = {}
         excluded_frames = {}
 
-        while not frame_getter_done.is_set() or len(extracted_frames) + len(excluded_frames) < num_processed_frames:
+        while not frame_getter_done.is_set() or len(extracted_frames) + len(excluded_frames) < total_frames:
             # print(f"Extracted frames: {len(extracted_frames)}")
-            if num_processed_frames == 0:
-                print("0 % proceeded")
-            else:
-                current_progression = (len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100
-                if current_progression - LAST_PROGRESSION > 0.01:
-                    print("{:.2f} % proceeded".format(current_progression))
-                LAST_PROGRESSION = current_progression
-            
-            # print("not frame_getter_done.is_set()", not frame_getter_done.is_set())
+            current_progression = (len(extracted_frames) + len(excluded_frames)) / total_frames * 100
+            if current_progression - LAST_PROGRESSION > 0.01:
+                print("{:.2f} % proceeded".format(current_progression))
+            LAST_PROGRESSION = current_progression
+
+            print("Extracted frames: ", len(extracted_frames))
+            print("Excluded frames: ", len(excluded_frames))
 
             try:
                 frame_index, extracted_frame = extracted_frames_queue.get(
-                    block=not frame_getter_done.is_set(), timeout=0.1
+                    block=not frame_getter_done.is_set(), timeout=1
                 )
                 extracted_frames[frame_index] = extracted_frame
             except queue.Empty:
@@ -171,7 +174,7 @@ def on_single_extract_btn_clicked(
 
             try:
                 frame_index, excluded_frame = excluded_frames_queue.get(
-                    block=not frame_getter_done.is_set(), timeout=0.1
+                    block=not frame_getter_done.is_set(), timeout=1
                 )
                 excluded_frames[frame_index] = excluded_frame
             except queue.Empty:

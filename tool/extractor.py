@@ -32,7 +32,7 @@ class VideoExtractor():
                 break
 
             if frame_count % frame_interval == 0:
-                yield frame_to_pil_image(frame), frame_count
+                yield frame_to_pil_image(frame), captured_frame_count
                 captured_frame_count += 1
 
                 if max_frames is not None and captured_frame_count >= max_frames:
