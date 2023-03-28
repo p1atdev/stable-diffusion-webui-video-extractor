@@ -1,3 +1,4 @@
+import os
 from typing import Literal
 from pathlib import Path
 
@@ -13,8 +14,9 @@ BlurryTags = ["blurry"]
 LAION_AESTHETIC_MODELS_PATH = None
 
 extensions_dir = Path(paths.script_path, "extensions")
-if (extensions_dir / "stable-diffusion-webui-video-extractor" / "models"):
-    LAION_AESTHETIC_MODELS_PATH = extensions_dir / "stable-diffusion-webui-video-extractor" / "models"
+
+if os.path.isdir(f'{extensions_dir}/stable-diffusion-webui-blip2-captioner'):
+    LAION_AESTHETIC_MODELS_PATH = extensions_dir / "stable-diffusion-webui-blip2-captioner" / "models"
 else:
     LAION_AESTHETIC_MODELS_PATH = Path(scripts.basedir(), "models")
 
