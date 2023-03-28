@@ -16,7 +16,7 @@ from tool.extractor import VideoExtractor
 from tool.interrogator import WD14Tagger, unload_wd14tagger
 from tool.predictor import LaionAestheticPredictor, unload_laion_aesthetic_predictor
 from common import TaggerModelType, LaionAestheticModelType
-from utils import get_video_length, get_video_frames
+from utils import get_video_length, get_video_frames, write_out_frames, compress_folder
 
 WD14TAGGER_MODELS: Dict[str, TaggerModelType] = {
     "faster": "wd14-vit-v2",
@@ -142,8 +142,6 @@ def on_single_extract_btn_clicked(
 
             frame_queue.put((None, None))
             frame_getter_done.set()
-            print("Frame getter done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("is set?", frame_getter_done.is_set())
 
         processing_thread = threading.Thread(target=process_worker)
         processing_thread.start()
@@ -161,7 +159,7 @@ def on_single_extract_btn_clicked(
                 print("{:.2f} % proceeded".format(current_progression))
             LAST_PROGRESSION = current_progression
 
-            # これを消すとマジでなぜか動かない
+            # これを消すとマジでなぜか動かない。マジで。
             print("Extracted frames: ", len(extracted_frames))
             print("Excluded frames: ", len(excluded_frames))
 
@@ -216,48 +214,66 @@ def on_single_extract_btn_clicked(
         print(e)
         return [f"Error: {e}", None, None]
 
-def on_single_download_extracted_btn(folder_name: str = "extracted", frame_type: str = "extracted"):
+def on_single_download_extracted_btn_clicked():
     if "extracted" not in CURRENT_STATE:
         return ["No extracted frames", None]
-    
     try:
+        # 書き出し
+        video_name = Path(CURRENT_STATE["video_path"]).stem
+
         # 一時ディレクトリを作成
-        tmp_dir = tempfile.TemporaryDirectory().name
+        tmp_dir = Path(tempfile.TemporaryDirectory().name) / video_name
 
-        # フォルダを作成
-        folder_path = Path(tmp_dir, folder_name)
-        print("Created folder path", folder_path)
+        # フレームを書き出す
+        write_out_frames(CURRENT_STATE["extracted"], tmp_dir)
 
-        # 既にあったら削除
-        if os.path.exists(folder_path):
-            print("Folder already exists. Removing...")
-            shutil.rmtree(folder_path)
-            print("Removed folder", folder_path)
+        # 圧縮して
+        zip_path = compress_folder(tmp_dir.resolve())
 
-        
-        os.makedirs(folder_path)
-        print("Created folder", folder_path)
+        # パスを返す
+        return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
+    except Exception as e:
+        print(e)
+        return [f"Error: {e}", None, ""]
 
-        # フォルダ内に画像を作成
-        for i, frame in enumerate(CURRENT_STATE[frame_type]):
-            img_path = Path(folder_path, f"{i}.jpg")
-            frame.save(img_path)
-        print("Created images in folder", folder_path)
+def on_single_download_excluded_btn_clicked():
+    if "excluded" not in CURRENT_STATE:
+        return ["No excluded frames", None]
+    try:
+        # 書き出し
+        video_name = Path(CURRENT_STATE["video_path"]).stem
 
-        # 既に zip あったら削除
-        zip_path = Path(tmp_dir, f"{folder_name}.zip")
-        if os.path.exists(zip_path):
-            print("Zip file already exists. Removing...")
-            os.remove(zip_path)
-            print("Removed zip file", zip_path)
+        # 一時ディレクトリを作成
+        tmp_dir = Path(tempfile.TemporaryDirectory().name) / video_name
 
-        # ZIPファイルに圧縮
-        zip_path = shutil.make_archive(os.path.join(tmp_dir, folder_name), "zip", folder_path)
+        # フレームを書き出す
+        write_out_frames(CURRENT_STATE["excluded"], tmp_dir)
 
-        print("Compressing finished!", zip_path)
+        # 圧縮して
+        zip_path = compress_folder(tmp_dir.resolve())
 
-        # フォルダを削除
-        shutil.rmtree(folder_path)
+        # パスを返す
+        return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
+    except Exception as e:
+        print(e)
+        return [f"Error: {e}", None, ""]
+
+def on_single_download_all_btn_clicked():
+    if "extracted" not in CURRENT_STATE or "excluded" not in CURRENT_STATE:
+        return ["No extracted frames", None]
+    try:
+        # 書き出し
+        video_name = Path(CURRENT_STATE["video_path"]).stem
+
+        # 一時ディレクトリを作成
+        tmp_dir = Path(tempfile.TemporaryDirectory().name) / video_name
+
+        # フレームを書き出す
+        write_out_frames(CURRENT_STATE["extracted"], tmp_dir / "extracted")
+        write_out_frames(CURRENT_STATE["excluded"], tmp_dir / "excluded")
+
+        # 圧縮して
+        zip_path = compress_folder(tmp_dir.resolve())
 
         # パスを返す
         return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
@@ -416,7 +432,17 @@ def on_ui_tabs():
         )
 
         single_download_extracted_btn.click(
-            fn=on_single_download_extracted_btn,
+            fn=on_single_download_extracted_btn_clicked,
+            inputs=[],
+            outputs=[single_status_text, common_file_download_area, common_download_area_message_md]
+        )
+        single_download_extracted_btn.click(
+            fn=on_single_download_extracted_btn_clicked,
+            inputs=[],
+            outputs=[single_status_text, common_file_download_area, common_download_area_message_md]
+        )
+        single_download_all_btn.click(
+            fn=on_single_download_all_btn_clicked,
             inputs=[],
             outputs=[single_status_text, common_file_download_area, common_download_area_message_md]
         )
