@@ -37,7 +37,7 @@ LAST_PROGRESSION = 0
 
 def on_single_video_set(video_path: str):
     print("Video set to ", video_path) 
-    if not os.path.exists(video_path) or video_path == "" or video_path is None:
+    if video_path == "" or video_path is None:
         return ""
     
     length = get_video_length(video_path)
@@ -161,6 +161,7 @@ def on_single_extract_btn_clicked(
                 print("{:.2f} % proceeded".format(current_progression))
             LAST_PROGRESSION = current_progression
 
+            # これを消すとマジでなぜか動かない
             print("Extracted frames: ", len(extracted_frames))
             print("Excluded frames: ", len(excluded_frames))
 
