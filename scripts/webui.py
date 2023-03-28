@@ -15,6 +15,7 @@ from tool.extractor import VideoExtractor
 from tool.interrogator import WD14Tagger, unload_wd14tagger
 from tool.predictor import LaionAestheticPredictor, unload_laion_aesthetic_predictor
 from common import TaggerModelType, LaionAestheticModelType
+from utils import get_video_length, get_video_frames
 
 WD14TAGGER_MODELS: Dict[str, TaggerModelType] = {
     "faster": "wd14-vit-v2",
@@ -30,6 +31,20 @@ CURRENT_STATE = {
     "extracted": [], # list[Image.Image]
     "excluded": [] # list[Image.Image]
 }
+
+LAST_PROGRESSION = 0
+
+def on_single_video_set(video_path: str):
+    if not os.path.exists(video_path) or video_path == "" or video_path is None:
+        return ""
+    
+    length = get_video_length(video_path)
+    frames = get_video_frames(video_path)
+
+    message = f"Video length: {length:.2f} seconds, {frames} frames"
+    print(message)
+
+    return message
 
 def on_single_preview_btn_clicked(
         video_path: str, 
@@ -134,10 +149,15 @@ def on_single_extract_btn_clicked(
 
         while not frame_getter_done.is_set() or len(extracted_frames) + len(excluded_frames) < num_processed_frames:
             # print(f"Extracted frames: {len(extracted_frames)}")
+            global LAST_PROGRESSION
+
             if num_processed_frames == 0:
                 print("0 % proceeded")
             else:
-                print("{:.2f} % proceeded".format((len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100))
+                current_progression = (len(extracted_frames) + len(excluded_frames)) / num_processed_frames * 100
+                if current_progression - LAST_PROGRESSION > 0.01:
+                    print("{:.2f} % proceeded".format(current_progression))
+                LAST_PROGRESSION = current_progression
             
             try:
                 frame_index, extracted_frame = extracted_frames_queue.get(
@@ -256,6 +276,8 @@ def on_ui_tabs():
                             with gr.Column():
                                 single_video_input = gr.Video(format="mp4", source="upload", label="Input", interactive=True)
 
+                                single_video_information_md = gr.Markdown("")
+
                                 single_preview_btn = gr.Button("Preview", variant="secondary")
                                 single_extracting_btn = gr.Button("Extract", variant="primary")
 
@@ -349,6 +371,12 @@ def on_ui_tabs():
                         common_download_area_message_md = gr.Markdown("")
                         common_file_download_area = gr.File(label="Download area", format="zip", interactive=False)
     
+        single_video_input.change(
+            fn=on_single_video_set, 
+            inputs=[single_video_input], 
+            outputs=[single_video_information_md]
+        )
+
         single_preview_btn.click(
             fn=on_single_preview_btn_clicked,
             inputs=[
