@@ -41,7 +41,7 @@ class LaionAesthetic():
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # load the model you trained previously or the model available in this repo
-        pt_state = torch.load(state_name)
+        pt_state = torch.load(state_name, map_location=torch.device(self.device))
 
         # CLIP embedding dim is 768 for CLIP ViT L 14
         self.predictor = AestheticPredictor(768)
