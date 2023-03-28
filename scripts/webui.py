@@ -228,7 +228,7 @@ def on_single_download_extracted_btn_clicked():
         write_out_frames(CURRENT_STATE["extracted"], tmp_dir)
 
         # 圧縮して
-        zip_path = compress_folder(tmp_dir.resolve())
+        zip_path = compress_folder(str(tmp_dir))
 
         # パスを返す
         return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
@@ -250,7 +250,7 @@ def on_single_download_excluded_btn_clicked():
         write_out_frames(CURRENT_STATE["excluded"], tmp_dir)
 
         # 圧縮して
-        zip_path = compress_folder(tmp_dir.resolve())
+        zip_path = compress_folder(str(tmp_dir))
 
         # パスを返す
         return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
@@ -273,7 +273,7 @@ def on_single_download_all_btn_clicked():
         write_out_frames(CURRENT_STATE["excluded"], tmp_dir / "excluded")
 
         # 圧縮して
-        zip_path = compress_folder(tmp_dir.resolve())
+        zip_path = compress_folder(str(tmp_dir))
 
         # パスを返す
         return ["Compressing finished! Download from below area.", zip_path, "## Download from here ↓"]
