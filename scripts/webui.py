@@ -16,7 +16,7 @@ from tool.extractor import VideoExtractor
 from tool.interrogator import WD14Tagger, unload_wd14tagger
 from tool.predictor import LaionAestheticPredictor, unload_laion_aesthetic_predictor
 from common import TaggerModelType, LaionAestheticModelType
-from utils import get_video_length, get_video_frames, write_out_frames, compress_folder
+from extractor_utils import get_video_length, get_video_frames, write_out_frames, compress_folder
 
 WD14TAGGER_MODELS: Dict[str, TaggerModelType] = {
     "faster": "wd14-vit-v2",
